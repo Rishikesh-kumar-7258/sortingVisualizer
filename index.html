@@ -2,42 +2,73 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sorting visualizer</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" initial-scale="1.0">
+  <title>Sorting Visualizer</title>
 
-    <!-- CSS ans JS links -->
-    <link rel="stylesheet" href="static/css/index.css">
-    <script type="module" src="static/js/index.js" defer></script>
+  <!-- BOOTSTRAP CSS-->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 
-    <!-- Bootstrap -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
-        crossorigin="anonymous"></script>
+  <!-- STYLE AND SCRIPT -->
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
 
 </head>
 
-<body  class="container-fluid bg-dark text-white">
+<body>
+  <!-- MAIN BOX   -->
+  <div class="container-fluid mx-auto bg-dark p-md-4">
 
-        <!-- Header Section  -->
-        <div class="row">
-            <header class="col-12">
-                <div class="display-4 text-center fw-bolder">Sorting Visualizer</div>
-            </header>
-            <nav class="col-12">
-                <button class="btn btn-primary randomNumbersBtn">Generate Random Number</button>
-            </nav>
+    <!-- BUTTONS AND STUFF -->
+    <div class="row">
+
+      <div class="d-flex flex-row justify-content-between align-items-center">
+        <!-- RANDOM NUMBERS BUTTON  -->
+        <div class="flex-grow-1 mx-2 row">
+          <label for="randomNumbers" class="col-form-label text-white col-md-2 col-xs-6">Elements: </label>
+          <div class="col-md-10 col-xs-6">
+            <input type="number" class="form-control bg-secondary text-white" id="randomNumbers" value="20">
+          </div>
         </div>
-        <!-- Header Section End  -->
 
-        <div class="row">
-            <div class="numbers col-12"></div>
+
+        <!-- SPEED BUTTON  -->
+        <div class="flex-grow-1 mx-2">
+          <select class="form-select bg-secondary text-white" aria-label="Choose visualization speed">
+            <option selected>Select Speed</option>
+            <option value="1">1x</option>
+            <option value="2">2x</option>
+            <option value="3">3x</option>
+          </select>
         </div>
 
-        <canvas id="canvas"></canvas>
+        <!-- ALGORITHM BUTTON  -->
+        <div class="flex-grow-1 mx-2">
+          <select class="form-select bg-secondary text-white" aria-label="Choose visualization algorithm">
+            <option selected>Select Algorithm</option>
+            <option value="1">Bubble Sort</option>
+            <option value="2">Selection Sort</option>
+          </select>
+        </div>
+
+        <!-- SORT BUTTON  -->
+        <div class="mx-2">
+          <button class="btn btn-success ">Sort</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CANVAS -->
+    <div class="row"></div>
+
+  </div>
+
+  <!-- BOOTSTRAP SCRIPT -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+    crossorigin="anonymous"></script>
+
 </body>
 
 </html>
