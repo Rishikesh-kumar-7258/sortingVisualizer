@@ -12,8 +12,10 @@ Visualization of different sorting algorithms using HTML, CSS, and JavaScript.
 1. Bubble Sort
 2. Selection Sort
 3. Insertion Sort
+4. Merge Sort
+5. Quick Sort
 
 ## Contact
 
-Maintainer : [Rishikesh Kumar](https://gihub.com/Rishikesh-kumar-7258)
+Maintainer : [Rishikesh Kumar](https://gihub.com/Rishikesh-kumar-7258) \
 Email : rishi7258prince@gmail.com
