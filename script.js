@@ -552,8 +552,11 @@ function fillOptions(el, options) {
 		el.appendChild(opt);
 	}
 }
-fillOptions(algorithm, Object.keys(ALGORITHMS));
-fillOptions(speed, Object.keys(SPEED));
+fillOptions(algorithm, Object.keys(ALGORITHMS).sort());
+fillOptions(
+	speed,
+	Object.keys(SPEED).sort((a, b) => a < b)
+);
 speed.value = "Medium";
 
 // function to restart the animation
