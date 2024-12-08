@@ -373,12 +373,87 @@ class QuickSort extends SortingAlgorithm {
 	}
 }
 
+// HEAP SORT
+class HeapSort extends SortingAlgorithm {
+	constructor(arr) {
+		super(arr);
+	}
+
+	sort() {
+		const arr = this.arr.slice();
+		const n = arr.length;
+
+		const ans = [];
+
+		let start = performance.now();
+		const makeHeap = (arr) => {
+			for (let i = n / 2; i >= 0; i--) {
+				heapify(arr, n, i);
+			}
+		};
+
+		const heapify = (arr, size, i) => {
+			let largest = i;
+			let l = 2 * i + 1;
+			let r = 2 * i + 2;
+
+			if (l <= size && arr[l] > arr[largest]) {
+				largest = l;
+			}
+
+			if (r <= size && arr[r] > arr[largest]) {
+				largest = r;
+			}
+
+			if (largest !== i) {
+				[arr[i], arr[largest]] = [arr[largest], arr[i]];
+				ans.push({
+					arr: arr.slice(),
+					current: i,
+					largest: largest,
+				});
+				heapify(arr, size, largest);
+			}
+		};
+
+		makeHeap(arr);
+		let size = n - 1;
+		while (size >= 0) {
+			[arr[0], arr[size]] = [arr[size], arr[0]];
+			size--;
+
+			ans.push({
+				arr: arr.slice(),
+				current: 0,
+				left: 0,
+				right: size,
+			});
+
+			heapify(arr, size, 0);
+		}
+
+		ans.push({
+			arr: arr.slice(),
+		});
+
+		console.log(arr);
+
+		let end = performance.now();
+
+		this.sortedArr = arr;
+		this.time = end - start;
+
+		return ans;
+	}
+}
+
 const ALGORITHMS = {
 	"Bubble Sort": BubbleSort,
 	"Selection Sort": SelectionSort,
 	"Insertion Sort": InsertionSort,
 	"Merge Sort": MergeSort,
 	"Quick Sort": QuickSort,
+	"Heap Sort": HeapSort,
 };
 
 const SPEED = {
@@ -432,7 +507,7 @@ function draw(arr, options = {}) {
 			ctx.fillStyle = "red";
 		}
 
-		if (options.minIndex === i) {
+		if (options.minIndex === i || options.largest === i) {
 			ctx.fillStyle = "blue";
 		}
 
