@@ -1,29 +1,90 @@
-.bar{
-    background : linear-gradient(to bottom, #800080, #400040);
-    width : 20px;
-    border : 1px solid #f08080;
-}
-.active{
-    background : linear-gradient(to bottom, #006400, #008000)
-}
-
-.selected{
-    background : linear-gradient(to bottom, #8b0000, #ff0000);
-}
-
-.curr_i{
-    background : linear-gradient(to bottom, darkgoldenrod, goldenrod);
-}
-
-#bar_area{
-    display : flex;
-    align-items: baseline;
-    justify-content: center;
-    /* bottom : 10px; */
-    background : radial-gradient(circle, #ffffff, #7e7ed3);
-    border-bottom: 10px solid #000000;
+/* CSS custom properties — set dynamically by JS theme engine */
+:root {
+  --bg:          #080812;
+  --surface:     #10102a;
+  --surface2:    #1a1a38;
+  --border:      #252550;
+  --text:        #e2e8f0;
+  --text-muted:  #8892a8;
+  --bar:         #6366f1;
+  --bar-compare: #f59e0b;
+  --bar-write:   #ec4899;
+  --bar-pivot:   #ef4444;
+  --bar-sorted:  #10b981;
+  --accent:      #6366f1;
+  --logo-bg:     #6366f1;
 }
 
-.nav-item{
-    margin : 5px;
+/* ── Base ── */
+html, body { background-color: var(--bg); color: var(--text); }
+
+/* ── Structural sections ── */
+#app-header,
+#app-controls,
+#algo-info {
+  background-color: var(--surface);
+  border-color: var(--border);
+}
+
+/* ── Controls ── */
+.ctrl-select {
+  background-color: var(--surface2);
+  border-color: var(--border);
+  color: var(--text);
+}
+.ctrl-select:hover { border-color: var(--accent); }
+.ctrl-select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 30%, transparent); }
+
+/* range input track */
+.ctrl-range { appearance: none; height: 4px; border-radius: 9999px; background-color: var(--surface2); outline: none; cursor: pointer; }
+.ctrl-range::-webkit-slider-thumb { appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--accent); cursor: pointer; border: 2px solid var(--bg); box-shadow: 0 0 0 1px var(--accent); }
+.ctrl-range::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: var(--accent); cursor: pointer; border: 2px solid var(--bg); }
+
+/* ── Buttons ── */
+.ctrl-btn-primary {
+  background-color: var(--accent);
+  color: #fff;
+  border: none;
+}
+.ctrl-btn-primary:hover:not(:disabled) { filter: brightness(1.1); }
+.ctrl-btn-primary:active:not(:disabled) { filter: brightness(0.9); }
+
+.ctrl-btn-secondary {
+  background-color: transparent;
+  color: var(--text);
+  border-color: var(--border);
+}
+.ctrl-btn-secondary:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+
+/* ── Visualization area ── */
+#viz-container { background-color: var(--bg); }
+
+#bar-area {
+  background: radial-gradient(ellipse at bottom, var(--surface2) 0%, var(--bg) 70%);
+  border: 1px solid var(--border);
+  gap: 1px;
+}
+
+/* ── Bar elements ── */
+.bar-elem {
+  flex-shrink: 0;
+  transition: background-color 80ms ease, height 80ms ease;
+  will-change: height, background-color;
+}
+
+/* ── Legend dots ── */
+.legend-default   { background-color: var(--bar); }
+.legend-comparing { background-color: var(--bar-compare); }
+.legend-write     { background-color: var(--bar-write); }
+.legend-pivot     { background-color: var(--bar-pivot); }
+.legend-sorted    { background-color: var(--bar-sorted); }
+
+/* ── Logo ── */
+#logo { background-color: var(--logo-bg); color: #fff; }
+
+/* ── Modal ── */
+#modal-card {
+  background-color: var(--surface);
+  border-color: var(--border);
+  color: var(--text);
 }

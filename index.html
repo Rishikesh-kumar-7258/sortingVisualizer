@@ -1,104 +1,192 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="en" class="h-full">
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sorting visualizer</title>
-
-    <!-- CSS ans JS links -->
-    <link rel="stylesheet" href="static/css/index.css">
-    <script src="static/js/index.js" defer></script>
-
-    <!-- Bootstrap -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
-        crossorigin="anonymous"></script>
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sorting Visualizer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="static/css/index.css">
 </head>
 
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#">Sorting Visualizer</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-                data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
-                aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item">
-                        <select name="sorting_type" id="sorting_type" class="form-select">
-                            <option value="Selection">Selection sort</option>
-                            <option value="Bubble">Bubble sort</option>
-                            <option value="Insertion">Insertion Sort</option>
-                            <option value="Merge">Merge Sort</option>
-                            <option value="Quick">Quick Sort</option>
-                            <option value="Count">Count Sort - [Under Work]</option>
-                        </select>
-                    </li>
+<body class="h-full flex flex-col overflow-hidden">
 
-                    <li class="nav-item">
-                        <div class="form-floating">
-                            <input type="range" name="size" id="size" min="5" max="100" step="1" value="10">
-                            <label for="size" class="text-white">Size of array</label>
-                        </div>
-                    </li>
+  <!-- Header -->
+  <header id="app-header" class="shrink-0 flex items-center justify-between px-5 py-3 border-b">
+    <div class="flex items-center gap-3">
+      <div id="logo" class="w-8 h-8 rounded-lg flex items-center justify-center font-black text-sm select-none">SV</div>
+      <h1 class="text-lg font-bold tracking-tight">Sorting Visualizer</h1>
+    </div>
+    <div class="flex items-center gap-5 text-sm">
+      <div class="flex items-center gap-1.5">
+        <span class="stat-label text-xs uppercase tracking-wider opacity-50">Comparisons</span>
+        <span id="stat-comparisons" class="font-mono font-bold tabular-nums">0</span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <span class="stat-label text-xs uppercase tracking-wider opacity-50">Writes</span>
+        <span id="stat-writes" class="font-mono font-bold tabular-nums">0</span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <span class="stat-label text-xs uppercase tracking-wider opacity-50">Time</span>
+        <span id="stat-time" class="font-mono font-bold tabular-nums">0.0s</span>
+      </div>
+    </div>
+  </header>
 
-                    <li class="nav-item">
-                        <select class="form-select" name="speed" id="speed">
-                            <option value="Fast">Fast</option>
-                            <option value="Medium">Medium</option>
-                            <option value="Slow">Slow</option>
-                        </select>
-                    </li>
-                    <li class="nav-item">
-                        <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                            data-bs-target="#exampleModal">
-                            Custom Input
-                        </button>
+  <!-- Controls -->
+  <div id="app-controls" class="shrink-0 flex flex-wrap items-end gap-4 px-5 py-3 border-b">
 
-                        <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel"
-                            aria-hidden="true">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="exampleModalLabel">Enter Array Data</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                            aria-label="Close"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <textarea class="form-control" name="array_data" id="array_data"
-                                            rows="10"></textarea>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary"
-                                            data-bs-dismiss="modal">Close</button>
-                                        <button type="button" class="btn btn-primary" id="array_saver">Save</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+    <div class="control-group flex flex-col gap-1">
+      <label class="text-xs uppercase tracking-wider opacity-50 font-medium">Algorithm</label>
+      <select id="algo-select" class="ctrl-select rounded-lg px-3 py-2 text-sm font-medium border focus:outline-none cursor-pointer">
+        <option value="bubble">Bubble Sort</option>
+        <option value="selection">Selection Sort</option>
+        <option value="insertion">Insertion Sort</option>
+        <option value="merge">Merge Sort</option>
+        <option value="quick">Quick Sort</option>
+        <option value="heap">Heap Sort</option>
+        <option value="shell">Shell Sort</option>
+        <option value="radix">Radix Sort (LSD)</option>
+        <option value="cocktail">Cocktail Shaker Sort</option>
+        <option value="comb">Comb Sort</option>
+      </select>
+    </div>
 
-                    </li>
+    <div class="control-group flex flex-col gap-1">
+      <label class="text-xs uppercase tracking-wider opacity-50 font-medium">
+        Array Size: <span id="size-label" class="font-bold not-italic">50</span>
+      </label>
+      <input type="range" id="size-slider" min="5" max="200" value="50" class="ctrl-range w-28">
+    </div>
 
-                </ul>
-            </div>
-        </div>
-    </nav>
+    <div class="control-group flex flex-col gap-1">
+      <label class="text-xs uppercase tracking-wider opacity-50 font-medium">
+        Speed: <span id="speed-label" class="font-bold not-italic">Medium</span>
+      </label>
+      <input type="range" id="speed-slider" min="1" max="100" value="50" class="ctrl-range w-28">
+    </div>
 
-    <section class="container">
-        <div class="row">
-            <div class="col-12 col-md-4 p-3">
-                <button id="start_btn" class="btn btn-success">Start</button>
-            </div>
-            <div id="bar_area" class="col-12 d-flex"></div>
-        </div>
-    </section>
+    <div class="control-group flex flex-col gap-1">
+      <label class="text-xs uppercase tracking-wider opacity-50 font-medium">Array Type</label>
+      <select id="array-type" class="ctrl-select rounded-lg px-3 py-2 text-sm font-medium border focus:outline-none cursor-pointer">
+        <option value="random">Random</option>
+        <option value="nearly_sorted">Nearly Sorted</option>
+        <option value="reversed">Reversed</option>
+        <option value="few_unique">Few Unique</option>
+        <option value="sorted">Already Sorted</option>
+        <option value="mountain">Mountain</option>
+        <option value="valley">Valley</option>
+      </select>
+    </div>
+
+    <div class="control-group flex flex-col gap-1">
+      <label class="text-xs uppercase tracking-wider opacity-50 font-medium">Theme</label>
+      <select id="theme-select" class="ctrl-select rounded-lg px-3 py-2 text-sm font-medium border focus:outline-none cursor-pointer">
+        <option value="midnight">Midnight</option>
+        <option value="ocean">Ocean</option>
+        <option value="neon">Neon</option>
+        <option value="sunset">Sunset</option>
+        <option value="forest">Forest</option>
+        <option value="light">Light</option>
+      </select>
+    </div>
+
+    <div class="flex-1"></div>
+
+    <!-- Action Buttons -->
+    <div class="flex items-center gap-2">
+      <button id="btn-generate" class="ctrl-btn-secondary px-4 py-2 rounded-lg text-sm font-medium border transition-all">
+        Generate
+      </button>
+      <button id="btn-custom" class="ctrl-btn-secondary px-4 py-2 rounded-lg text-sm font-medium border transition-all">
+        Custom Input
+      </button>
+      <button id="btn-sort" class="ctrl-btn-primary px-5 py-2 rounded-lg text-sm font-semibold transition-all">
+        ▶ Sort
+      </button>
+      <button id="btn-pause" class="ctrl-btn-secondary px-4 py-2 rounded-lg text-sm font-medium border transition-all opacity-40 cursor-not-allowed" disabled>
+        ⏸ Pause
+      </button>
+      <button id="btn-reset" class="ctrl-btn-secondary px-4 py-2 rounded-lg text-sm font-medium border transition-all">
+        ↺ Reset
+      </button>
+    </div>
+  </div>
+
+  <!-- Visualization Area -->
+  <div id="viz-container" class="flex-1 min-h-0 flex px-5 py-4">
+    <div id="bar-area" class="flex-1 flex items-end rounded-xl overflow-hidden"></div>
+  </div>
+
+  <!-- Algorithm Info Footer -->
+  <div id="algo-info" class="shrink-0 flex flex-wrap items-center justify-between gap-4 px-5 py-3 border-t">
+    <div class="min-w-0">
+      <h2 id="algo-name" class="font-semibold text-sm"></h2>
+      <p id="algo-desc" class="text-xs opacity-60 mt-0.5 max-w-sm"></p>
+    </div>
+
+    <div class="flex items-center gap-5 text-xs font-mono shrink-0">
+      <div class="text-center">
+        <div class="opacity-40 text-xs uppercase tracking-wider mb-0.5">Best</div>
+        <div id="cx-best" class="font-bold"></div>
+      </div>
+      <div class="text-center">
+        <div class="opacity-40 text-xs uppercase tracking-wider mb-0.5">Avg</div>
+        <div id="cx-avg" class="font-bold"></div>
+      </div>
+      <div class="text-center">
+        <div class="opacity-40 text-xs uppercase tracking-wider mb-0.5">Worst</div>
+        <div id="cx-worst" class="font-bold"></div>
+      </div>
+      <div class="text-center">
+        <div class="opacity-40 text-xs uppercase tracking-wider mb-0.5">Space</div>
+        <div id="cx-space" class="font-bold"></div>
+      </div>
+      <div class="text-center">
+        <div class="opacity-40 text-xs uppercase tracking-wider mb-0.5">Stable</div>
+        <div id="cx-stable" class="font-bold"></div>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3 text-xs shrink-0">
+      <div class="flex items-center gap-1.5">
+        <div class="w-3 h-3 rounded-sm legend-default"></div>
+        <span class="opacity-60">Default</span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <div class="w-3 h-3 rounded-sm legend-comparing"></div>
+        <span class="opacity-60">Comparing</span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <div class="w-3 h-3 rounded-sm legend-write"></div>
+        <span class="opacity-60">Writing</span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <div class="w-3 h-3 rounded-sm legend-pivot"></div>
+        <span class="opacity-60">Pivot</span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <div class="w-3 h-3 rounded-sm legend-sorted"></div>
+        <span class="opacity-60">Sorted</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Array Modal -->
+  <div id="modal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+    <div id="modal-backdrop" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+    <div id="modal-card" class="relative z-10 rounded-2xl border p-6 w-96 shadow-2xl">
+      <h3 class="font-semibold text-base mb-1">Custom Array Input</h3>
+      <p class="text-xs opacity-50 mb-3">Enter numbers separated by spaces or commas (e.g. 64 25 12 22 11)</p>
+      <textarea id="custom-textarea" rows="3"
+        class="ctrl-select w-full rounded-lg p-3 text-sm font-mono border focus:outline-none resize-none"
+        placeholder="64 25 12 22 11"></textarea>
+      <div class="flex justify-end gap-2 mt-4">
+        <button id="modal-cancel" class="ctrl-btn-secondary px-4 py-2 rounded-lg text-sm border">Cancel</button>
+        <button id="modal-apply" class="ctrl-btn-primary px-4 py-2 rounded-lg text-sm font-medium">Apply</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="static/js/index.js"></script>
 </body>
-
 </html>
