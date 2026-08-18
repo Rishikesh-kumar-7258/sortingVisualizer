@@ -135,6 +135,31 @@ const state = {
 };
 
 // ─────────────────────────────────────────────
+//  SETTINGS PERSISTENCE (sessionStorage)
+// ─────────────────────────────────────────────
+const SETTINGS_KEY = 'sortingVisualizer.settings';
+
+function saveSettings() {
+  const settings = {
+    algorithm: state.algorithm,
+    size:      state.size,
+    speedVal:  state.speedVal,
+    arrayType: state.arrayType,
+    theme:     state.theme,
+  };
+  sessionStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+}
+
+function loadSettings() {
+  try {
+    const raw = sessionStorage.getItem(SETTINGS_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+// ─────────────────────────────────────────────
 //  ARRAY GENERATORS
 // ─────────────────────────────────────────────
 function makeArray(size, type) {
@@ -740,18 +765,21 @@ function updateAlgoInfo() {
 document.getElementById('algo-select').addEventListener('change', (e) => {
   state.algorithm = e.target.value;
   updateAlgoInfo();
+  saveSettings();
   if (!state.sorting) resetVisualizer();
 });
 
 document.getElementById('size-slider').addEventListener('input', (e) => {
   state.size = parseInt(e.target.value);
   document.getElementById('size-label').textContent = state.size;
+  saveSettings();
   if (!state.sorting) resetVisualizer();
 });
 
 document.getElementById('speed-slider').addEventListener('input', (e) => {
   state.speedVal = parseInt(e.target.value);
   document.getElementById('speed-label').textContent = getSpeedLabel(state.speedVal);
+  saveSettings();
   // If actively sorting, adjust speed on-the-fly
   if (state.sorting && !state.paused) {
     const { intervalMs, stepsPerTick } = computeAnimSpeed(state.speedVal);
@@ -764,12 +792,14 @@ document.getElementById('speed-slider').addEventListener('input', (e) => {
 
 document.getElementById('array-type').addEventListener('change', (e) => {
   state.arrayType = e.target.value;
+  saveSettings();
   if (!state.sorting) resetVisualizer();
 });
 
 document.getElementById('theme-select').addEventListener('change', (e) => {
   state.theme = e.target.value;
   applyTheme(state.theme);
+  saveSettings();
   renderBars();
 });
 
@@ -852,6 +882,23 @@ resizeObserver.observe(document.getElementById('bar-area'));
 // ─────────────────────────────────────────────
 //  INIT
 // ─────────────────────────────────────────────
+(function restoreSettings() {
+  const saved = loadSettings();
+  if (!saved) return;
+  if (saved.algorithm && ALGO_INFO[saved.algorithm]) state.algorithm = saved.algorithm;
+  if (saved.theme && THEMES[saved.theme])            state.theme     = saved.theme;
+  if (Number.isFinite(saved.size))                   state.size      = saved.size;
+  if (Number.isFinite(saved.speedVal))                state.speedVal  = saved.speedVal;
+  if (saved.arrayType)                                state.arrayType = saved.arrayType;
+
+  document.getElementById('algo-select').value  = state.algorithm;
+  document.getElementById('theme-select').value = state.theme;
+  document.getElementById('array-type').value   = state.arrayType;
+  document.getElementById('size-slider').value  = state.size;
+  document.getElementById('size-label').textContent = state.size;
+  document.getElementById('speed-slider').value = state.speedVal;
+})();
+
 applyTheme(state.theme);
 state.array = makeArray(state.size, state.arrayType);
 updateAlgoInfo();
