@@ -11,7 +11,7 @@
 <body class="h-full flex flex-col overflow-hidden">
 
   <!-- Header -->
-  <header id="app-header" class="shrink-0 flex items-center justify-between px-5 py-3 border-b">
+  <header id="app-header" class="shrink-0 flex items-center justify-between px-5 py-3 border-b fade-in-down">
     <div class="flex items-center gap-3">
       <div id="logo" class="w-8 h-8 rounded-lg flex items-center justify-center font-black text-sm select-none">SV</div>
       <h1 class="text-lg font-bold tracking-tight">Sorting Visualizer</h1>
@@ -33,7 +33,7 @@
   </header>
 
   <!-- Controls -->
-  <div id="app-controls" class="shrink-0 flex flex-wrap items-end gap-4 px-5 py-3 border-b">
+  <div id="app-controls" class="shrink-0 flex flex-wrap items-end gap-4 px-5 py-3 border-b fade-in-down" style="animation-delay: 60ms;">
 
     <div class="control-group flex flex-col gap-1">
       <label class="text-xs uppercase tracking-wider opacity-50 font-medium">Algorithm</label>
@@ -90,30 +90,40 @@
       </select>
     </div>
 
+    <div class="control-group flex flex-col gap-1">
+      <label class="text-xs uppercase tracking-wider opacity-50 font-medium">
+        Volume: <span id="volume-label" class="font-bold not-italic">50%</span>
+      </label>
+      <input type="range" id="volume-slider" min="0" max="100" value="50" class="ctrl-range w-24">
+    </div>
+
     <div class="flex-1"></div>
 
     <!-- Action Buttons -->
     <div class="flex items-center gap-2">
-      <button id="btn-generate" class="ctrl-btn-secondary px-4 py-2 rounded-lg text-sm font-medium border transition-all">
+      <button id="btn-mute" title="Toggle sound" class="ctrl-btn-secondary w-10 h-10 flex items-center justify-center rounded-lg text-base border transition-all active:scale-90">
+        🔊
+      </button>
+      <button id="btn-generate" class="ctrl-btn-secondary px-4 py-2 rounded-lg text-sm font-medium border transition-all active:scale-95">
         Generate
       </button>
-      <button id="btn-custom" class="ctrl-btn-secondary px-4 py-2 rounded-lg text-sm font-medium border transition-all">
+      <button id="btn-custom" class="ctrl-btn-secondary px-4 py-2 rounded-lg text-sm font-medium border transition-all active:scale-95">
         Custom Input
       </button>
-      <button id="btn-sort" class="ctrl-btn-primary px-5 py-2 rounded-lg text-sm font-semibold transition-all">
+      <button id="btn-sort" class="ctrl-btn-primary px-5 py-2 rounded-lg text-sm font-semibold transition-all active:scale-95">
         ▶ Sort
       </button>
-      <button id="btn-pause" class="ctrl-btn-secondary px-4 py-2 rounded-lg text-sm font-medium border transition-all opacity-40 cursor-not-allowed" disabled>
+      <button id="btn-pause" class="ctrl-btn-secondary px-4 py-2 rounded-lg text-sm font-medium border transition-all opacity-40 cursor-not-allowed active:scale-95" disabled>
         ⏸ Pause
       </button>
-      <button id="btn-reset" class="ctrl-btn-secondary px-4 py-2 rounded-lg text-sm font-medium border transition-all">
+      <button id="btn-reset" class="ctrl-btn-secondary px-4 py-2 rounded-lg text-sm font-medium border transition-all active:scale-95">
         ↺ Reset
       </button>
     </div>
   </div>
 
   <!-- Visualization Area -->
-  <div id="viz-container" class="flex-1 min-h-0 flex px-5 py-4">
+  <div id="viz-container" class="flex-1 min-h-0 flex px-5 py-4 fade-in" style="animation-delay: 120ms;">
     <div id="bar-area" class="flex-1 flex items-end rounded-xl overflow-hidden"></div>
   </div>
 
@@ -172,7 +182,7 @@
   </div>
 
   <!-- Custom Array Modal -->
-  <div id="modal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+  <div id="modal" class="fixed inset-0 z-50 flex items-center justify-center modal-hidden">
     <div id="modal-backdrop" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
     <div id="modal-card" class="relative z-10 rounded-2xl border p-6 w-96 shadow-2xl">
       <h3 class="font-semibold text-base mb-1">Custom Array Input</h3>

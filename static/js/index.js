@@ -132,6 +132,8 @@ const state = {
   sortedSet:    new Set(),
   stepsPerTick: 1,
   intervalMs:   50,
+  soundEnabled: true,
+  volume:       0.5,
 };
 
 // ─────────────────────────────────────────────
@@ -141,11 +143,13 @@ const SETTINGS_KEY = 'sortingVisualizer.settings';
 
 function saveSettings() {
   const settings = {
-    algorithm: state.algorithm,
-    size:      state.size,
-    speedVal:  state.speedVal,
-    arrayType: state.arrayType,
-    theme:     state.theme,
+    algorithm:    state.algorithm,
+    size:         state.size,
+    speedVal:     state.speedVal,
+    arrayType:    state.arrayType,
+    theme:        state.theme,
+    soundEnabled: state.soundEnabled,
+    volume:       state.volume,
   };
   sessionStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
 }
@@ -465,6 +469,14 @@ function getBarColor(index) {
   return 'var(--bar)';
 }
 
+function getBarGlow(index) {
+  const hl = state.highlights && state.highlights[index];
+  if (hl === 'compare') return '0 0 8px 0 var(--bar-compare)';
+  if (hl === 'write')   return '0 0 10px 1px var(--bar-write)';
+  if (hl === 'pivot')   return '0 0 10px 1px var(--bar-pivot)';
+  return 'none';
+}
+
 function renderBars() {
   const container = document.getElementById('bar-area');
   if (!container) return;
@@ -482,17 +494,119 @@ function renderBars() {
     bar.style.height     = `${(val / maxVal) * 100}%`;
     bar.style.minHeight  = '2px';
     bar.style.backgroundColor = getBarColor(i);
+    bar.style.boxShadow = getBarGlow(i);
     if (n <= 80) bar.style.borderRadius = '2px 2px 0 0';
     container.appendChild(bar);
   });
 }
 
-function updateBar(index) {
+function updateBar(index, pop) {
   const bar = document.getElementById(`b${index}`);
   if (!bar) return;
   const maxVal = Math.max(...state.array, 1);
   bar.style.height = `${(state.array[index] / maxVal) * 100}%`;
   bar.style.backgroundColor = getBarColor(index);
+  bar.style.boxShadow = getBarGlow(index);
+  if (pop) {
+    bar.classList.remove('bar-pop');
+    void bar.offsetWidth; // restart animation
+    bar.classList.add('bar-pop');
+  }
+}
+
+// ─────────────────────────────────────────────
+//  SOUND ENGINE
+// ─────────────────────────────────────────────
+let audioCtx = null;
+let lastToneAt = 0;
+const MIN_TONE_GAP_MS = 12; // caps concurrent oscillators at very high sort speeds
+
+function getAudioCtx() {
+  if (!audioCtx) {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return null;
+    audioCtx = new Ctx();
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+function valueToFreq(value, minFreq = 140, maxFreq = 1000) {
+  const maxVal = Math.max(...state.array, 1);
+  const ratio = Math.max(0, Math.min(1, value / maxVal));
+  return minFreq + ratio * (maxFreq - minFreq);
+}
+
+function playTone(freq, { duration = 0.06, type = 'sine', gain = 0.2 } = {}) {
+  if (!state.soundEnabled || state.volume <= 0) return;
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+
+  const now = performance.now();
+  if (now - lastToneAt < MIN_TONE_GAP_MS) return;
+  lastToneAt = now;
+
+  const t0 = ctx.currentTime;
+  const osc  = ctx.createOscillator();
+  const amp  = ctx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, t0);
+  const peak = gain * state.volume;
+  amp.gain.setValueAtTime(0, t0);
+  amp.gain.linearRampToValueAtTime(peak, t0 + 0.005);
+  amp.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
+  osc.connect(amp).connect(ctx.destination);
+  osc.start(t0);
+  osc.stop(t0 + duration + 0.02);
+}
+
+function playCompareSound(a, b) {
+  const v = (state.array[a] + state.array[b]) / 2;
+  playTone(valueToFreq(v), { type: 'sine', duration: 0.05, gain: 0.16 });
+}
+
+function playWriteSound(index) {
+  playTone(valueToFreq(state.array[index]), { type: 'triangle', duration: 0.07, gain: 0.22 });
+}
+
+// Melodic ascending chime played as the final "sorted" cascade sweeps across the bars.
+function playCascadeNote(index) {
+  if (!state.soundEnabled || state.volume <= 0) return;
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  const t0 = ctx.currentTime;
+  const freq = valueToFreq(state.array[index], 220, 1400);
+  const osc = ctx.createOscillator();
+  const amp = ctx.createGain();
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(freq, t0);
+  const peak = 0.18 * state.volume;
+  amp.gain.setValueAtTime(0, t0);
+  amp.gain.linearRampToValueAtTime(peak, t0 + 0.01);
+  amp.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.18);
+  osc.connect(amp).connect(ctx.destination);
+  osc.start(t0);
+  osc.stop(t0 + 0.2);
+}
+
+function playCompleteChord() {
+  if (!state.soundEnabled || state.volume <= 0) return;
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  const t0 = ctx.currentTime;
+  [523.25, 659.25, 783.99].forEach((freq, i) => { // C5, E5, G5
+    const osc = ctx.createOscillator();
+    const amp = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, t0);
+    const peak = 0.2 * state.volume;
+    amp.gain.setValueAtTime(0, t0 + i * 0.03);
+    amp.gain.linearRampToValueAtTime(peak, t0 + i * 0.03 + 0.02);
+    amp.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.6);
+    osc.connect(amp).connect(ctx.destination);
+    osc.start(t0 + i * 0.03);
+    osc.stop(t0 + 0.65);
+  });
 }
 
 // ─────────────────────────────────────────────
@@ -517,6 +631,7 @@ function processStep(step) {
   switch (step.type) {
     case 'compare': {
       state.comparisons++;
+      playCompareSound(step.a, step.b);
       highlights[step.a] = 'compare';
       highlights[step.b] = 'compare';
       state.prevHL = [step.a, step.b];
@@ -527,19 +642,21 @@ function processStep(step) {
     case 'swap': {
       state.writes += 2;
       [state.array[step.a], state.array[step.b]] = [state.array[step.b], state.array[step.a]];
+      playWriteSound(step.a);
       highlights[step.a] = 'write';
       highlights[step.b] = 'write';
       state.prevHL = [step.a, step.b];
-      updateBar(step.a);
-      updateBar(step.b);
+      updateBar(step.a, true);
+      updateBar(step.b, true);
       break;
     }
     case 'set': {
       state.writes++;
       state.array[step.index] = step.value;
+      playWriteSound(step.index);
       highlights[step.index] = 'write';
       state.prevHL = [step.index];
-      updateBar(step.index);
+      updateBar(step.index, true);
       break;
     }
     case 'pivot': {
@@ -565,9 +682,17 @@ function processStep(step) {
         setTimeout(() => {
           state.sortedSet.add(i);
           const bar = document.getElementById(`b${i}`);
-          if (bar) bar.style.backgroundColor = 'var(--bar-sorted)';
+          if (bar) {
+            bar.style.backgroundColor = 'var(--bar-sorted)';
+            bar.style.boxShadow = 'none';
+            bar.classList.remove('bar-cascade');
+            void bar.offsetWidth;
+            bar.classList.add('bar-cascade');
+          }
+          playCascadeNote(i);
         }, i * delay);
       }
+      setTimeout(playCompleteChord, arr.length * delay + 20);
       setTimeout(finishSorting, arr.length * delay + 100);
       return false;
     }
@@ -803,6 +928,25 @@ document.getElementById('theme-select').addEventListener('change', (e) => {
   renderBars();
 });
 
+document.getElementById('volume-slider').addEventListener('input', (e) => {
+  state.volume = parseInt(e.target.value) / 100;
+  document.getElementById('volume-label').textContent = `${e.target.value}%`;
+  saveSettings();
+});
+
+document.getElementById('btn-mute').addEventListener('click', () => {
+  state.soundEnabled = !state.soundEnabled;
+  updateMuteButton();
+  saveSettings();
+  if (state.soundEnabled) getAudioCtx(); // resume on user gesture
+});
+
+function updateMuteButton() {
+  const btn = document.getElementById('btn-mute');
+  btn.textContent = state.soundEnabled ? '🔊' : '🔇';
+  btn.classList.toggle('muted', !state.soundEnabled);
+}
+
 document.getElementById('btn-generate').addEventListener('click', resetVisualizer);
 
 document.getElementById('btn-sort').addEventListener('click', () => {
@@ -825,16 +969,16 @@ document.getElementById('btn-reset').addEventListener('click', () => {
 
 // Custom Input Modal
 document.getElementById('btn-custom').addEventListener('click', () => {
-  document.getElementById('modal').classList.remove('hidden');
+  document.getElementById('modal').classList.remove('modal-hidden');
   document.getElementById('custom-textarea').focus();
 });
 
 document.getElementById('modal-backdrop').addEventListener('click', () => {
-  document.getElementById('modal').classList.add('hidden');
+  document.getElementById('modal').classList.add('modal-hidden');
 });
 
 document.getElementById('modal-cancel').addEventListener('click', () => {
-  document.getElementById('modal').classList.add('hidden');
+  document.getElementById('modal').classList.add('modal-hidden');
 });
 
 document.getElementById('modal-apply').addEventListener('click', () => {
@@ -851,7 +995,7 @@ document.getElementById('modal-apply').addEventListener('click', () => {
     if (state.sorting) { clearInterval(state.animInterval); clearInterval(state.timerInterval); state.sorting = false; state.paused = false; }
     renderBars();
     updateButtons();
-    document.getElementById('modal').classList.add('hidden');
+    document.getElementById('modal').classList.add('modal-hidden');
   } else {
     document.getElementById('custom-textarea').style.borderColor = 'var(--bar-pivot)';
     setTimeout(() => { document.getElementById('custom-textarea').style.borderColor = ''; }, 1500);
@@ -860,7 +1004,7 @@ document.getElementById('modal-apply').addEventListener('click', () => {
 
 document.getElementById('custom-textarea').addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && e.ctrlKey) document.getElementById('modal-apply').click();
-  if (e.key === 'Escape') document.getElementById('modal').classList.add('hidden');
+  if (e.key === 'Escape') document.getElementById('modal').classList.add('modal-hidden');
 });
 
 // Keyboard shortcuts
@@ -890,6 +1034,8 @@ resizeObserver.observe(document.getElementById('bar-area'));
   if (Number.isFinite(saved.size))                   state.size      = saved.size;
   if (Number.isFinite(saved.speedVal))                state.speedVal  = saved.speedVal;
   if (saved.arrayType)                                state.arrayType = saved.arrayType;
+  if (typeof saved.soundEnabled === 'boolean')        state.soundEnabled = saved.soundEnabled;
+  if (Number.isFinite(saved.volume))                  state.volume    = saved.volume;
 
   document.getElementById('algo-select').value  = state.algorithm;
   document.getElementById('theme-select').value = state.theme;
@@ -897,11 +1043,14 @@ resizeObserver.observe(document.getElementById('bar-area'));
   document.getElementById('size-slider').value  = state.size;
   document.getElementById('size-label').textContent = state.size;
   document.getElementById('speed-slider').value = state.speedVal;
+  document.getElementById('volume-slider').value = Math.round(state.volume * 100);
+  document.getElementById('volume-label').textContent = `${Math.round(state.volume * 100)}%`;
 })();
 
 applyTheme(state.theme);
 state.array = makeArray(state.size, state.arrayType);
 updateAlgoInfo();
 updateButtons();
+updateMuteButton();
 renderBars();
 document.getElementById('speed-label').textContent = getSpeedLabel(state.speedVal);
