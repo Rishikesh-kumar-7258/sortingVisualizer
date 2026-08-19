@@ -610,6 +610,34 @@ function playCompleteChord() {
 }
 
 // ─────────────────────────────────────────────
+//  CONFETTI (played once on sort completion)
+// ─────────────────────────────────────────────
+function launchConfetti() {
+  const layer = document.getElementById('confetti-layer');
+  if (!layer) return;
+  const colors = ['--bar', '--bar-compare', '--bar-write', '--bar-pivot', '--bar-sorted', '--accent']
+    .map(v => getComputedStyle(document.documentElement).getPropertyValue(v).trim());
+
+  const count = 90;
+  for (let i = 0; i < count; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    const size  = 5 + Math.random() * 6;
+    piece.style.left            = `${Math.random() * 100}%`;
+    piece.style.width           = `${size}px`;
+    piece.style.height          = `${size * (0.4 + Math.random() * 0.8)}px`;
+    piece.style.backgroundColor = color;
+    piece.style.borderRadius    = Math.random() < 0.5 ? '50%' : '2px';
+    piece.style.setProperty('--spin', `${(Math.random() < 0.5 ? -1 : 1) * (360 + Math.random() * 720)}deg`);
+    piece.style.animationDuration = `${1.4 + Math.random() * 1.2}s`;
+    piece.style.animationDelay    = `${Math.random() * 0.3}s`;
+    layer.appendChild(piece);
+    piece.addEventListener('animationend', () => piece.remove());
+  }
+}
+
+// ─────────────────────────────────────────────
 //  ANIMATION ENGINE
 // ─────────────────────────────────────────────
 // Maps to [index]: 'compare' | 'write' | 'pivot'
@@ -693,6 +721,7 @@ function processStep(step) {
         }, i * delay);
       }
       setTimeout(playCompleteChord, arr.length * delay + 20);
+      setTimeout(launchConfetti, arr.length * delay + 20);
       setTimeout(finishSorting, arr.length * delay + 100);
       return false;
     }
