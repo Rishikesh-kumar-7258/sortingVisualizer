@@ -164,6 +164,56 @@ function loadSettings() {
 }
 
 // ─────────────────────────────────────────────
+//  BEST-TIME TRACKING (localStorage, persists across sessions)
+// ─────────────────────────────────────────────
+const BEST_TIMES_KEY = 'sortingVisualizer.bestTimes';
+
+function loadBestTimes() {
+  try {
+    const raw = localStorage.getItem(BEST_TIMES_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveBestTimes(times) {
+  try { localStorage.setItem(BEST_TIMES_KEY, JSON.stringify(times)); } catch { /* storage unavailable/full — best-times just won't persist */ }
+}
+
+function bestTimeKey() {
+  return `${state.algorithm}:${state.arrayType}:${state.size}`;
+}
+
+function updateBestTimeDisplay() {
+  const el = document.getElementById('stat-best');
+  if (!el) return;
+  const rec = loadBestTimes()[bestTimeKey()];
+  el.textContent = rec ? `${rec.time.toFixed(1)}s` : '–';
+}
+
+function flashBestBadge() {
+  const el = document.getElementById('stat-best');
+  if (!el) return;
+  el.classList.remove('stat-flash');
+  void el.offsetWidth; // restart animation
+  el.classList.add('stat-flash');
+}
+
+function recordCompletionTime(elapsedSeconds) {
+  const times = loadBestTimes();
+  const key   = bestTimeKey();
+  const prev  = times[key];
+  const isNewBest = !prev || elapsedSeconds < prev.time;
+  if (isNewBest) {
+    times[key] = { time: elapsedSeconds, date: Date.now() };
+    saveBestTimes(times);
+  }
+  updateBestTimeDisplay();
+  if (isNewBest) flashBestBadge();
+}
+
+// ─────────────────────────────────────────────
 //  ARRAY GENERATORS
 // ─────────────────────────────────────────────
 function makeArray(size, type) {
@@ -745,6 +795,11 @@ function tick() {
 }
 
 function finishSorting() {
+  // tick()'s own `result.done` fallback can call this a second time shortly
+  // after the 'done' cascade already did — the sorting flag guards against
+  // recording the completion time twice.
+  if (!state.sorting) return;
+
   clearInterval(state.animInterval);
   clearInterval(state.timerInterval);
   state.animInterval  = null;
@@ -754,6 +809,10 @@ function finishSorting() {
   state.generator = null;
   updateStatsDisplay();
   updateButtons();
+
+  if (state.startTime) {
+    recordCompletionTime((Date.now() - state.startTime) / 1000);
+  }
 }
 
 function computeAnimSpeed(speedVal) {
@@ -854,6 +913,7 @@ function resetVisualizer() {
 
   renderBars();
   updateButtons();
+  updateBestTimeDisplay();
 }
 
 // ─────────────────────────────────────────────
@@ -1024,6 +1084,7 @@ document.getElementById('modal-apply').addEventListener('click', () => {
     if (state.sorting) { clearInterval(state.animInterval); clearInterval(state.timerInterval); state.sorting = false; state.paused = false; }
     renderBars();
     updateButtons();
+    updateBestTimeDisplay();
     document.getElementById('modal').classList.add('modal-hidden');
   } else {
     document.getElementById('custom-textarea').style.borderColor = 'var(--bar-pivot)';
@@ -1081,5 +1142,6 @@ state.array = makeArray(state.size, state.arrayType);
 updateAlgoInfo();
 updateButtons();
 updateMuteButton();
+updateBestTimeDisplay();
 renderBars();
 document.getElementById('speed-label').textContent = getSpeedLabel(state.speedVal);
