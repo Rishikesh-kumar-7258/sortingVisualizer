@@ -835,42 +835,46 @@ function getSpeedLabel(speedVal) {
   return 'Fastest';
 }
 
+// Sets up a fresh generator for the current algorithm/array — shared by
+// startSorting() (auto-play) and stepForward() (single-step) so both start
+// from identical state.
+function beginGenerator() {
+  state.comparisons = 0;
+  state.writes      = 0;
+  highlights        = {};
+  state.prevHL      = [];
+  state.sortedSet   = new Set();
+  state.startTime   = Date.now();
+
+  const arr = [...state.array];
+  const genMap = {
+    bubble:    bubbleSortGen,
+    selection: selectionSortGen,
+    insertion: insertionSortGen,
+    merge:     mergeSortGen,
+    quick:     quickSortGen,
+    heap:      heapSortGen,
+    shell:     shellSortGen,
+    radix:     radixSortGen,
+    cocktail:  cocktailSortGen,
+    comb:      combSortGen,
+  };
+  state.generator = (genMap[state.algorithm] || bubbleSortGen)(arr);
+
+  state.timerInterval = setInterval(() => {
+    if (!state.paused) {
+      const s = ((Date.now() - state.startTime) / 1000).toFixed(1);
+      document.getElementById('stat-time').textContent = `${s}s`;
+    }
+  }, 100);
+
+  state.sorting = true;
+}
+
 function startSorting() {
   if (state.sorting && !state.paused) return;
 
-  if (!state.sorting) {
-    // Fresh start
-    state.comparisons = 0;
-    state.writes      = 0;
-    highlights        = {};
-    state.prevHL      = [];
-    state.sortedSet   = new Set();
-    state.startTime   = Date.now();
-
-    const arr = [...state.array];
-    const genMap = {
-      bubble:    bubbleSortGen,
-      selection: selectionSortGen,
-      insertion: insertionSortGen,
-      merge:     mergeSortGen,
-      quick:     quickSortGen,
-      heap:      heapSortGen,
-      shell:     shellSortGen,
-      radix:     radixSortGen,
-      cocktail:  cocktailSortGen,
-      comb:      combSortGen,
-    };
-    state.generator = (genMap[state.algorithm] || bubbleSortGen)(arr);
-
-    state.timerInterval = setInterval(() => {
-      if (!state.paused) {
-        const s = ((Date.now() - state.startTime) / 1000).toFixed(1);
-        document.getElementById('stat-time').textContent = `${s}s`;
-      }
-    }, 100);
-
-    state.sorting = true;
-  }
+  if (!state.sorting) beginGenerator();
 
   state.paused = false;
 
@@ -888,6 +892,26 @@ function pauseSorting() {
   clearInterval(state.animInterval);
   state.animInterval = null;
   state.paused = true;
+  updateButtons();
+}
+
+// Advances the sort by exactly one comparison/swap/write, starting a fresh
+// generator first if nothing is running yet. Stays paused between calls so
+// repeated clicks (or the ArrowRight shortcut) walk through the algorithm
+// one operation at a time.
+function stepForward() {
+  if (state.sorting && !state.paused) return; // actively auto-playing — pause first
+
+  if (!state.sorting) beginGenerator();
+
+  clearInterval(state.animInterval);
+  state.animInterval = null;
+  state.paused = true;
+
+  const result = state.generator.next();
+  if (result.done) { finishSorting(); return; }
+  processStep(result.value);
+  updateStatsDisplay();
   updateButtons();
 }
 
@@ -927,6 +951,7 @@ function updateStatsDisplay() {
 function updateButtons() {
   const btnSort    = document.getElementById('btn-sort');
   const btnPause   = document.getElementById('btn-pause');
+  const btnStep    = document.getElementById('btn-step');
   const btnGenerate = document.getElementById('btn-generate');
   const btnCustom  = document.getElementById('btn-custom');
 
@@ -935,10 +960,12 @@ function updateButtons() {
     btnSort.disabled      = true;
     btnPause.disabled     = false;
     btnPause.textContent  = '⏸ Pause';
+    btnStep.disabled      = true;
     btnGenerate.disabled  = true;
     btnCustom.disabled    = true;
     btnSort.classList.add('opacity-40', 'cursor-not-allowed');
     btnPause.classList.remove('opacity-40', 'cursor-not-allowed');
+    btnStep.classList.add('opacity-40', 'cursor-not-allowed');
     btnGenerate.classList.add('opacity-40', 'cursor-not-allowed');
     btnCustom.classList.add('opacity-40', 'cursor-not-allowed');
   } else if (state.paused) {
@@ -946,17 +973,21 @@ function updateButtons() {
     btnSort.disabled      = false;
     btnPause.disabled     = false;
     btnPause.textContent  = '⏸ Paused';
+    btnStep.disabled      = false;
     btnSort.classList.remove('opacity-40', 'cursor-not-allowed');
     btnPause.classList.remove('opacity-40', 'cursor-not-allowed');
+    btnStep.classList.remove('opacity-40', 'cursor-not-allowed');
   } else {
     btnSort.textContent   = '▶ Sort';
     btnSort.disabled      = false;
     btnPause.disabled     = true;
     btnPause.textContent  = '⏸ Pause';
+    btnStep.disabled      = false;
     btnGenerate.disabled  = false;
     btnCustom.disabled    = false;
     btnSort.classList.remove('opacity-40', 'cursor-not-allowed');
     btnPause.classList.add('opacity-40', 'cursor-not-allowed');
+    btnStep.classList.remove('opacity-40', 'cursor-not-allowed');
     btnGenerate.classList.remove('opacity-40', 'cursor-not-allowed');
     btnCustom.classList.remove('opacity-40', 'cursor-not-allowed');
   }
@@ -1048,6 +1079,8 @@ document.getElementById('btn-sort').addEventListener('click', () => {
 
 document.getElementById('btn-pause').addEventListener('click', pauseSorting);
 
+document.getElementById('btn-step').addEventListener('click', stepForward);
+
 document.getElementById('btn-reset').addEventListener('click', () => {
   if (state.sorting) {
     resetVisualizer();
@@ -1107,6 +1140,7 @@ document.addEventListener('keydown', (e) => {
   }
   if (e.key === 'r' || e.key === 'R') resetVisualizer();
   if (e.key === 'g' || e.key === 'G') resetVisualizer();
+  if (e.key === 'ArrowRight') { e.preventDefault(); stepForward(); }
 });
 
 // Resize: re-render bars when container resizes
