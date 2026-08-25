@@ -158,6 +158,16 @@ html, body { background-color: var(--bg); color: var(--text); }
   animation-fill-mode: forwards;
 }
 
+/* ── Bar hover tooltip ── */
+#bar-tooltip {
+  background-color: var(--surface2);
+  border-color: var(--border);
+  color: var(--text);
+  white-space: nowrap;
+  transform: translate(-50%, -135%);
+  transition: opacity 80ms ease;
+}
+
 /* ── Best-time badge ── */
 @keyframes statFlash {
   0%   { transform: scale(1);    color: var(--text); }

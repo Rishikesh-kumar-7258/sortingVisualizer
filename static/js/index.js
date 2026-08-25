@@ -1147,6 +1147,32 @@ document.addEventListener('keydown', (e) => {
 const resizeObserver = new ResizeObserver(() => renderBars());
 resizeObserver.observe(document.getElementById('bar-area'));
 
+// Bar hover tooltip — delegated on the container since renderBars() replaces
+// individual bar elements on every re-render (resize, new array, etc.).
+(function initBarTooltip() {
+  const container = document.getElementById('bar-area');
+  const tooltip   = document.getElementById('bar-tooltip');
+  if (!container || !tooltip) return;
+
+  container.addEventListener('mousemove', (e) => {
+    const bar = e.target.closest('.bar-elem');
+    const idx = bar ? parseInt(bar.id.slice(1), 10) : NaN;
+    const value = state.array[idx];
+    if (Number.isNaN(idx) || value === undefined) {
+      tooltip.style.opacity = '0';
+      return;
+    }
+    tooltip.textContent    = `#${idx} · ${value}`;
+    tooltip.style.left     = `${e.clientX}px`;
+    tooltip.style.top      = `${e.clientY}px`;
+    tooltip.style.opacity  = '1';
+  });
+
+  container.addEventListener('mouseleave', () => {
+    tooltip.style.opacity = '0';
+  });
+})();
+
 // ─────────────────────────────────────────────
 //  INIT
 // ─────────────────────────────────────────────
