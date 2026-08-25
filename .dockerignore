@@ -1,0 +1,7 @@
+.git
+.gitignore
+.playwright-mcp
+test-results
+scripts
+Jenkinsfile
+README.md
